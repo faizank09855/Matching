@@ -5,8 +5,13 @@ import * as bcrypt from 'bcrypt';
 export const UserSchema = new Schema({
     name: String,
     age: Number,
-    email : String , 
-    password: String
+  email: {
+        type: String,
+        unique: true,   // Ensures unique index in MongoDB
+        required: true
+    },
+    password: String ,
+    onboardingStatus: String
 });
 
 

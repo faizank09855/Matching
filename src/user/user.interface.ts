@@ -5,4 +5,5 @@ export interface User extends Document {
   readonly email: string;
   readonly age: number;
   readonly password: string;
+  readonly onboardingStatus: String;
 }

@@ -7,10 +7,15 @@ export const PersonalDetailSchema = new Schema({
     dob: String,
     city : String , 
     bio : String , 
-    gender : Number, 
+    gender : String, 
     work : String ,
     education : String ,
     hometown : String,
     interests : String , 
-    hobby : String
+    hobby : String , 
+    userId : String, 
+    creativity : Array<String> , 
+    sportType : Array<String> , 
+    filmType : Array<String>  ,
+    smoke : String , 
 });

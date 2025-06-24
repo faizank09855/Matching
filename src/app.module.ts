@@ -9,6 +9,7 @@ import { MongooseModule } from '@nestjs/mongoose';
   imports: [
     MongooseModule.forRoot('mongodb://localhost:27017/Kryupa', { }),
     UserModule,
+ 
   ],
   controllers: [AppController],
   providers: [AppService],
