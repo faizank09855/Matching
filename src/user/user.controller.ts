@@ -1,21 +1,22 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { User } from "./user.interface";
 import { PersonalDetail } from "src/interface/personalDetails.interface";
 import { AuthGuard } from "@nestjs/passport";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { Likes } from "src/interface/like.interface";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { ImagekitService } from "src/imagekit/imagekit.service";
 
 @Controller('user')
 export class UserController {
 
-    constructor(private userService: UserService) { }
+    constructor(private userService: UserService, private imagekitService: ImagekitService) { }
 
     @Post('login')
     login(@Body() body: Object) {
         return this.userService.loginEmail(body)
     }
-
 
     @Post('signUp')
     signUp(@Body() body: User) {
@@ -42,16 +43,29 @@ export class UserController {
         return this.userService.getMatches(req.user)
     }
 
-
     @Post('likeUser')
     @UseGuards(JwtAuthGuard)
-    likeUser(@Request() req  , @Body() body :any) {
-        return this.userService.likeUser(req.user , body)
+    likeUser(@Request() req, @Body() body: any) {
+        return this.userService.likeUser(req.user, body)
     }
-  
+
     @Get('getLikedProfiles')
     @UseGuards(JwtAuthGuard)
     getLikedProfiles(@Request() req) {
         return this.userService.getLikedProfiles(req.user)
+    }
+
+    @Post('upload_image')
+    @UseGuards(JwtAuthGuard)
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadImage(@UploadedFile() file: Express.Multer.File) {
+        const uploaded = await this.imagekitService.uploadImage(file);
+        return uploaded;
+    }
+
+    @Post('change_profile_pic')
+    @UseGuards(JwtAuthGuard)
+    uploadProfilePic(@Request() req , @Body() body) {
+        return this.userService.changeProfilePic(req.user , body)
     }
 } 

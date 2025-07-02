@@ -10,6 +10,7 @@ import { JwtStrategy } from "./jwt.strategy";
 import { PersonalDetailSchema } from "./personalDetail.schemas";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { LikeSchema } from "src/schemas/like.schema";
+import { ImagekitModule } from "src/imagekit/imagekit.module";
 
 
 @Module({
@@ -22,6 +23,7 @@ import { LikeSchema } from "src/schemas/like.schema";
         secret: 'kryupa', // move to .env in production
         signOptions: { expiresIn: '1d' },
     }),
+    ImagekitModule
     ]
 })
 

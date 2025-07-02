@@ -3,6 +3,7 @@ import { Schema } from 'mongoose';
 
 
 export const PersonalDetailSchema = new Schema({
+    profilePic : String,
     height: String,
     dob: String,
     city : String , 

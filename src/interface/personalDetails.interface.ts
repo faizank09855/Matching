@@ -1,6 +1,7 @@
 import { Document } from 'mongoose';
 
 export interface PersonalDetail extends Document {  
+  readonly profilePic : String;
   readonly height: string;
   readonly dob: String;
   readonly city: String;
