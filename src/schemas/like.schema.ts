@@ -3,10 +3,7 @@ import { Schema } from 'mongoose';
 
 
 export const LikeSchema = new Schema({
-    userId: {
-        type: String,
-        unique: true,
-        required: true,
-    },
-    likedId: Array<String>,
+    userId: String,
+    likedId: String,
+    status: String
 });

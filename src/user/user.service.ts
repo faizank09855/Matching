@@ -109,64 +109,64 @@ export class UserService {
 
     async getMyPersonalDetails(user: Object) {
         try {
-            const response = await this.personalDetailsSchema.aggregate([ {
-                    $match: { userId: user['sub'] }
-                },{
-                     $lookup: {
-                        from: 'users',
-                        let: { userIdStr: '$userId' }, // userId is string
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: {
-                                        $eq: ['$_id', { $toObjectId: '$$userIdStr' }]
-                                    }
+            const response = await this.personalDetailsSchema.aggregate([{
+                $match: { userId: user['sub'] }
+            }, {
+                $lookup: {
+                    from: 'users',
+                    let: { userIdStr: '$userId' }, // userId is string
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: ['$_id', { $toObjectId: '$$userIdStr' }]
                                 }
-                            },
-                            {
-                                $project: {
-                                    _id: 0,
-                                    name: 1,
-                                    email: 1
-                                }
-                            },
-                            
-                        ],
-                        as: 'users'
-                    }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                name: 1,
+                                email: 1
+                            }
+                        },
+
+                    ],
+                    as: 'users'
+                }
 
 
-                } ,
+            },
 
-                 {
-                    $unwind: {
-                        path: '$users',
-                        preserveNullAndEmptyArrays: false // set to false to exclude unmatched users
-                    }
-                },
-                 {
-                    $project: {
-                        _id: 0,
-                        city: 1,
-                        userId: 1,
-                        age: 1,
-                        gender: 1,
-                        bio: 1,
-                        dob: 1,
-                        work : 1,
-                        education : 1 , 
-                        height: 1,
-                        creativity: 1,
-                        sportType: 1,
-                        filmType: 1,
-                        name: '$users.name',
-                        email: '$users.email' , 
-                        profilePic : 1 , 
-                        smoke : 1
-                    }
-                },
-                { $limit: 1 }
-            ])            
+            {
+                $unwind: {
+                    path: '$users',
+                    preserveNullAndEmptyArrays: false // set to false to exclude unmatched users
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    city: 1,
+                    userId: 1,
+                    age: 1,
+                    gender: 1,
+                    bio: 1,
+                    dob: 1,
+                    work: 1,
+                    education: 1,
+                    height: 1,
+                    creativity: 1,
+                    sportType: 1,
+                    filmType: 1,
+                    name: '$users.name',
+                    email: '$users.email',
+                    profilePic: 1,
+                    smoke: 1
+                }
+            },
+            { $limit: 1 }
+            ])
             if (response) {
                 return successResponse(' ', response[0])
             }
@@ -245,7 +245,8 @@ export class UserService {
                         sportType: 1,
                         filmType: 1,
                         name: '$users.name',
-                        email: '$users.email'
+                        email: '$users.email',
+                        profilePic: 1
                     }
                 }
             ]);
@@ -257,32 +258,14 @@ export class UserService {
 
     async likeUser(user: any, body: Likes) {
         try {
-            const liked = await this.likeSchema.findOne({ userId: user['sub'] });
-
-            if (liked) {
-                // Check if already liked to avoid duplicates (optional)
-                if (!liked.likedId.includes(body['userId'])) {
-                    liked.likedId.push(body['userId']);
-                    const result = await liked.save();
-                    return successResponse("Updated Successfully ✅", result);
-                } else {
-                    return successResponse("Already Liked ✅", liked);
-                }
-            } else {
-                const data = new this.likeSchema({
-                    userId: user['sub'],
-                    likedId: [body['userId']]
-                });
-                const result = await data.save();
-                return successResponse("Added Successfully ✅", result);
-            }
-
+            const likedData = new this.likeSchema({ likedId: body['userId'], userId: user['sub'], status: "Pending" });
+            likedData.save();
         } catch (e) {
             return errorResponse('Failed ❌', e);
         }
     }
 
-    s
+
     async getLikedProfiles(user: any) {
         try {
             // Step 1: Get liked user IDs
@@ -305,9 +288,101 @@ export class UserService {
         }
     }
 
-    async changeProfilePic(user : any, body : any) {
+    async changeProfilePic(user: any, body: any) {
         const userData = await this.personalDetailsSchema.findOneAndUpdate({ userId: user['sub'] }, { profilePic: body['profilePic'] }).exec();
         return successResponse("Profile pic updated")
 
     }
+
+    async getRequest(user: any) {
+        try {
+            const response = await this.likeSchema.aggregate([
+                {
+                    $match: {
+                        likedId: user['sub'] , 
+                        status  : "Pending"
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'users',
+                        let: { userIdStr: "$userId" },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $eq: ['$_id', { $toObjectId: '$$userIdStr' }]
+                                    }
+                                }
+                            },
+                            {
+                                $project: {
+                                    _id: 0,
+                                    name: 1,
+                                    email: 1
+                                }
+                            }
+                        ],
+                        as: 'users'
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "personaldetails",
+                        let: { userIdStr: "$userId" },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $eq: ['$userId', "$$userIdStr"]
+                                    }
+                                }
+                            },
+                            {
+                                $project: {
+                                    profilePic: 1,
+                                    _id: 0
+                                }
+                            }
+                        ],
+                        as: "PersonalDetails"
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$users',
+                        preserveNullAndEmptyArrays: false
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$PersonalDetails',
+                        preserveNullAndEmptyArrays: true // use true to allow empty profilePic
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        userId: 1,
+                        name: '$users.name',
+                        email: '$users.email',
+                        profilePic: "$PersonalDetails.profilePic"
+                    }
+                }
+            ]);
+
+            return successResponse("Data Found", response);
+        } catch (e) {
+            return errorResponse(e);
+        }
+    }
+
+
+
+
+    async acceptRequest(user: any, body: any) {
+        const result = await this.likeSchema.findOneAndUpdate({ likedId: user['sub'], userId: body['userId'] }, { status: "Accepted" })
+        return successResponse("request accepted", result)
+    }
+
 }

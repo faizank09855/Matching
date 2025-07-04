@@ -68,4 +68,17 @@ export class UserController {
     uploadProfilePic(@Request() req , @Body() body) {
         return this.userService.changeProfilePic(req.user , body)
     }
+   
+    @Get('get_requests')
+    @UseGuards(JwtAuthGuard)
+    getRequests(@Request() req, ) {
+        return this.userService.getRequest(req.user)
+    }
+
+
+    @Post('accept_request')
+    @UseGuards(JwtAuthGuard)
+    acceptRequest(@Request() req, @Body() body ) {
+        return this.userService.acceptRequest(req.user , body)
+    }
 } 
