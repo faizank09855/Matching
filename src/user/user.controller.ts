@@ -7,14 +7,20 @@ import { JwtAuthGuard } from "./jwt-auth.guard";
 import { Likes } from "src/interface/like.interface";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ImagekitService } from "src/imagekit/imagekit.service";
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { UserDto } from "src/interface/user.dto";
 
+@ApiTags('users')
 @Controller('user')
 export class UserController {
 
     constructor(private userService: UserService, private imagekitService: ImagekitService) { }
 
+    @ApiOperation({ summary: 'Create user' })
+    @ApiResponse({ status: 201, description: 'User created successfully' })
+    @ApiResponse({ status: 400, description: 'Bad request' })
     @Post('login')
-    login(@Body() body: Object) {
+    login(@Body() body: UserDto) {
         return this.userService.loginEmail(body)
     }
 
@@ -27,6 +33,14 @@ export class UserController {
     @UseGuards(JwtAuthGuard)
     savePersonalDetails(@Body() body: PersonalDetail, @Request() req) {
         return this.userService.savePersonalDetails(body, req.user)
+    }
+
+
+    
+    @Post('updatePersonalDetails')
+    @UseGuards(JwtAuthGuard)
+    updatePersonalDetails(@Body() body: PersonalDetail, @Request() req) {
+        return this.userService.updatePersonalDetails(body, req.user)
     }
 
 

@@ -1,8 +1,10 @@
 // cats/schemas/cat.schema.ts
 import { Schema } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { ApiProperty } from '@nestjs/swagger';
 
 export const UserSchema = new Schema({
+  
     name: String,
     age: Number,
   email: {

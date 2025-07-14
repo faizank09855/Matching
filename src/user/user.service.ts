@@ -19,7 +19,9 @@ export class UserService {
         @InjectModel('Likes') private likeSchema: Model<Likes>,
 
         private jwtService: JwtService) { }
-    async loginEmail(@Body() body: Object) {
+
+
+    async loginEmail(@Body() body: any) {
         const user = await this.UserSchema.findOne({ email: body['email'] }).exec();
         if (!user) {
             return {
@@ -53,29 +55,49 @@ export class UserService {
         }
     }
 
-
     async findByEmail(email: String) {
         const user = await this.UserSchema.findOne({ email }).exec();
         return user;
     }
 
-    signUp(user: User) {
+    async signUp(user: User) {
         try {
-            const userSchema = new this.UserSchema({ ...user, 'onboardingStatus': "Onboarding" });
+            // Check if user with the email already exists
+            const existingUser = await this.UserSchema.findOne({ email: user.email });
+
+            if (existingUser) {
+                return {
+                    status: false,
+                    message: "Email already registered",
+                    data: null,
+                };
+            }
+
+            // Create and save new user
+            const userSchema = new this.UserSchema({ ...user, onboardingStatus: "Onboarding" });
+            const savedUser = await userSchema.save();
+
+            const accessToken = this.jwtService.sign({
+                sub: savedUser._id,
+                name: savedUser.name,
+                email: savedUser.email,
+            });
+
             return {
                 status: true,
-                message: "data added successfully",
+                message: "User created successfully",
                 data: {
-                    ...userSchema.save(), accessToken: this.jwtService.sign({
-                        sub: userSchema._id,
-                        name: user.name,
-                        email: user.email
-                    })
+                    ...savedUser.toObject(),
+                    accessToken,
                 },
-            }
+            };
         } catch (e) {
-            console.log(e.toString());
-            return e
+            console.error(e);
+            return {
+                status: false,
+                message: "An error occurred during sign-up",
+                error: e.message,
+            };
         }
     }
 
@@ -102,10 +124,14 @@ export class UserService {
         }
     }
 
-
-
-
-
+    async updatePersonalDetails(personalDetails: PersonalDetail, user: any) {
+        try {
+            const result = await this.personalDetailsSchema.findOneAndUpdate({ userId: user['sub'] }, personalDetails);
+            return successResponse("data updated successfull", result);
+        } catch (e) {
+            return errorResponse(e.toString());
+        }
+    }
 
     async getMyPersonalDetails(user: Object) {
         try {
@@ -180,7 +206,6 @@ export class UserService {
         }
 
     }
-
 
     async getMatches(user: any) {
         try {
@@ -265,7 +290,6 @@ export class UserService {
         }
     }
 
-
     async getLikedProfiles(user: any) {
         try {
             // Step 1: Get liked user IDs
@@ -299,8 +323,8 @@ export class UserService {
             const response = await this.likeSchema.aggregate([
                 {
                     $match: {
-                        likedId: user['sub'] , 
-                        status  : "Pending"
+                        likedId: user['sub'],
+                        status: "Pending"
                     }
                 },
                 {
@@ -376,9 +400,6 @@ export class UserService {
             return errorResponse(e);
         }
     }
-
-
-
 
     async acceptRequest(user: any, body: any) {
         const result = await this.likeSchema.findOneAndUpdate({ likedId: user['sub'], userId: body['userId'] }, { status: "Accepted" })
